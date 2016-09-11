@@ -1,0 +1,53 @@
+Thoughtworks2017:(github:github.com/intwzt)
+背景：
+见pdf文档。
+
+实现语言：python
+
+测试运行方法：运行文件夹下的ut.py
+
+单元测试：unittest，由于代码精简，只给出getSnapshot函数的单元测试，测试用例在testcases.py中。考虑到了如下类别的输入情景：
+#测试用例1:正确输出结果
+#测试用例2:动物位置校验失败
+#测试用例3:ID唯一性
+#测试用例4:输入时间不完整
+#测试用例5:动物还未出现就开始移动(第一次捕捉动物位置时没有移动信息)
+#测试用例6:出现过的动物以第二次新动物的形式出现(如果以前出现过该动物,那么下次出现一定是动物产生移动)
+测试用例7:违法时间(25:31:02， 2017-13-32)
+
+补充：由于作业时间短，加之最近事情繁杂，本来打算实现的方法没有时间实现，所以用python实现了一个精简版本的作业。下面大致描述下本来的想法：
+主要思想：
+想要真正实现一个如题所描述的系统，有两个点需要完成：
+1. 固化整个数据，即数据的持久性。
+2. 服务器宕机时可以恢复数据，即数据的安全性。
+参考HADOOP的HDFS中Namenode的实现框架，保存一定时间间隔下动物快照集合和这些快照之间的转换关系的日志，即FSImage和EditLog，分别对应快照和修改日志，维护固定大小的修改日志大小，不断更新和保存FSImage，可以快速定位离查询时间最近的FSImage，然后根据EditLog还原小部分场景即可。
+这是Secondary NameNode，定时使用固定大小（写满日志）的EditLog文件更新当前的FSImage，将新更新的FSImage放入FSImage栈中，并固化在磁盘上，维护要求时间内（几个月）的FSImage栈。
+类的大致设计如下：
+class AnimalShift(object):
+    "记录动物移动的元类"
+    name = ''
+    edit_x = 0
+    edit_y = 0
+    def __init__(self, na, ex, ey):
+        self.name = na
+        self.edit_x = ex
+        self.edit_y = ey
+
+class AnimalImage(object):
+    "动物快照类"
+    animal = dict()
+    createdate = date.today()
+    def __init__(self):
+        self.animal = dict()
+
+class EditLog(object):
+    "快照改动日志类"
+    max_log_length = -1
+    current_length = 0
+    edit = dict()
+    def __init__(self, mll = 1000, cll = 0):
+        self.max_log_length = mll
+        self.current_log_length = cll
+
+
+
